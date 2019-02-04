@@ -5,7 +5,7 @@ import numpy as np
 # Establish the root path, data path and export output path
 root_path = os.path.join(os.getcwd(), ".")
 data_path = os.path.join(root_path, "raw_data")
-output_path = os.path.join(root_path, "output")
+output_path = os.path.join(root_path, "output_data")
 
 # Iterate through the listdir results
 filepaths = []

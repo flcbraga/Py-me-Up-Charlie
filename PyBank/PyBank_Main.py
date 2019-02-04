@@ -1,72 +1,63 @@
-import os
 import csv
+import os
 
-# Establish the root path, data path and export output path
-root_path = os.path.join(os.getcwd(), ".")
-data_path = os.path.join(root_path, "raw_data")
-output_path = os.path.join(root_path, "output")
+# choose 1 or 2
+file_num = 2
 
-# Iterate through the listdir results
-filepaths = []
-for file in os.listdir(data_path):
-    if file.endswith(".csv"):
-        filepaths.append(os.path.join(data_path, file))
+# create file path and save as file
+file = os.path.join('raw_data', 'budget_data_'+ str(file_num) +'.csv')
 
-# Using csv.DictReader()
-for file in filepaths:
-    tot_revenue = 0
-    month_count = 0
-    revenue = 0
-    rev_change = 0
-    data_dict_list = []
-    with open(file, newline="") as csvfile:
-        csvreader = csv.DictReader(csvfile)
-        for row in csvreader:
-            # Creating new revenue difference per month dictionary to calculate greatest inc/dec.
-            rev_diff = {"rev_diff": int("{Revenue}".format(**row)) - revenue}
-            rev_change = rev_change + int("{Revenue}".format(**row)) - revenue
-            revenue = int("{Revenue}".format(**row))
-            tot_revenue += revenue
-            month_count += 1
-            data_dict_list.append({**row, **rev_diff})
-        # Turn dictionary housing max and min rev_diff values as indvidual dicts outside of list.
-        increase_dict = dict(max(data_dict_list, key=lambda x:x["rev_diff"]))
-        decrease_dict = dict(min(data_dict_list, key=lambda x:x["rev_diff"]))
-        # Pull date and rev_diff values for the corresponding greatest inc/dec months.
-        increase_date = increase_dict.get("Date")
-        increase_revdiff = increase_dict.get("rev_diff")
-        decrease_date = decrease_dict.get("Date")
-        decrease_revdiff = decrease_dict.get("rev_diff")
-        # Adjust rev_diff to discount first row.
-        first_row = data_dict_list[0]
-        first_row_revdiff = first_row.get("rev_diff")
-        rev_change = rev_change - first_row_revdiff
-        avg_change = int(rev_change/(month_count - 1))
-        
-        # Grab the filename from the original path.
-        # The _, gets rid of the path. The , _ gets rid of the .csv.
-        _, filename = os.path.split(file)
-        filename, _ = filename.split(".csv")     
-        # Print the analysis to the terminal.
-        print(
-            f"Financial Analysis - {filename}\n"
-            f"----------------------------\n"
-            f"Total Months: {month_count}\n" 
-            f"Total Revenue: ${tot_revenue}\n"
-            f"Average Revenue Change: ${avg_change}\n"
-            f"Greatest Increase in Revenue: {increase_date} (${increase_revdiff})\n"
-            f"Greatest Decrease in Revenue: {decrease_date} (${decrease_revdiff})\n"
-        )
+#emply lists for month and revenue data
+months = []
+revenue = []
 
-        # Export a text file with the results.
-        text_path = os.path.join(output_path, filename + ".txt")
-        with open(text_path, "w") as text_file:
-            text_file.write(
-                f"Financial Analysis: {filename}\n"
-                f"----------------------------\n"
-                f"Total Months: {month_count}\n" 
-                f"Total Revenue: ${tot_revenue}\n"
-                f"Average Revenue Change: ${avg_change}\n"
-                f"Greatest Increase in Revenue: {increase_date} (${increase_revdiff})\n"
-                f"Greatest Decrease in Revenue: {decrease_date} (${decrease_revdiff})\n"
-            )
+#read csv and parse data into lists
+#revenue list will be list of integers
+with open(file, 'r') as csvfile:
+    csvread = csv.reader(csvfile)
+    
+    next(csvread, None)
+
+    for row in csvread:
+        months.append(row[0])
+        revenue.append(int(row[1]))
+
+#find total months
+total_months = len(months)
+
+#create greatest increase, decrease variables and set them equal to the first revenue entry
+#set total revenue = 0 
+greatest_inc = revenue[0]
+greatest_dec = revenue[0]
+total_revenue = 0
+
+#loop through revenue indices and compare # to find greatest inc and dec
+#also add each revenue to total revenue
+for r in range(len(revenue)):
+    if revenue[r] >= greatest_inc:
+        greatest_inc = revenue[r]
+        great_inc_month = months[r]
+    elif revenue[r] <= greatest_dec:
+        greatest_dec = revenue[r]
+        great_dec_month = months[r]
+    total_revenue += revenue[r]
+
+#calculate average_change
+average_change = round(total_revenue/total_months, 2)
+
+#sets path for output file
+output_dest = os.path.join('output_data','pybank_output_' + str(file_num) + '.txt')
+
+# opens the output destination in write mode and prints the summary
+with open(output_dest, 'w') as writefile:
+    writefile.writelines('Financial Analysis\n')
+    writefile.writelines('----------------------------' + '\n')
+    writefile.writelines('Total Months: ' + str(total_months) + '\n')
+    writefile.writelines('Total Revenue: $' + str(total_revenue) + '\n')
+    writefile.writelines('Average Revenue Change: $' + str(average_change) + '\n')
+    writefile.writelines('Greatest Increase in Revenue: ' + great_inc_month + ' ($' + str(greatest_inc) + ')'+ '\n')
+    writefile.writelines('Greatest Decrease in Revenue: ' + great_dec_month + ' ($' + str(greatest_dec) + ')')
+
+#opens the output file in r mode and prints to terminal
+with open(output_dest, 'r') as readfile:
+    print(readfile.read())
